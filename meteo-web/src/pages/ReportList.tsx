@@ -1,26 +1,10 @@
 import Layout from '../Layout.tsx';
 import { WeatherReport } from '../types.ts';
-import { DataGrid, GridActionsCellItem, GridColDef, GridRowsProp, GridToolbarContainer } from '@mui/x-data-grid';
+import { DataGrid, GridActionsCellItem, GridColDef, GridToolbarContainer } from '@mui/x-data-grid';
 import { Box, Button } from '@mui/material';
 import { Add, Edit } from '@mui/icons-material';
 import { useNavigate } from 'react-router';
-
-const reports: GridRowsProp<WeatherReport> = [
-    {
-        id: '29242699-5914-4a00-b1ac-1e0113a7a802',
-        temperature: 270,
-        unit: 'K',
-        date: '2022-01-01',
-        city: 'London'
-    },
-    {
-        id: 'b58798e7-eca4-4bb0-8e93-d595067092c7',
-        temperature: 100,
-        unit: 'F',
-        date: '2021-02-11',
-        city: 'Los Angeles'
-    }
-];
+import { useEffect, useState } from 'react';
 
 function EditToolbar() {
     const navigate = useNavigate();
@@ -36,7 +20,21 @@ function EditToolbar() {
 }
 
 function ReportList() {
+    const [reports, setReports] = useState<WeatherReport[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const fetchReports = async () => {
+            setIsLoading(true);
+            const response = await fetch('http://localhost:8000/api/reports');
+            const reports: WeatherReport[] = await response.json();
+            setReports(reports);
+            setIsLoading(false);
+        };
+        fetchReports();
+    }, []);
 
     const columns: GridColDef[] = [
         { field: 'id' },
@@ -78,10 +76,18 @@ function ReportList() {
         <Layout>
             <Box>
                 <DataGrid
+                    loading={isLoading}
                     rows={reports}
                     columns={columns}
                     columnVisibilityModel={{ id: false, unit: false }}
-                    slots={{ toolbar: EditToolbar }} />
+                    slots={{ toolbar: EditToolbar }}
+                    slotProps={{
+                        loadingOverlay: {
+                            variant: 'skeleton',
+                            noRowsVariant: 'skeleton'
+                        }
+                    }}
+                />
             </Box>
         </Layout>
     );
