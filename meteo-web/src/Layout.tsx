@@ -7,15 +7,18 @@ interface LayoutProps {
     children: React.ReactNode;
 }
 
+
 function Layout({ children }: LayoutProps) {
+
     return (
-        <React.Fragment>
+        <>
             <CssBaseline />
             <Box>
                 <AppBar position="static">
                     <Toolbar>
-                        <IconButton size="large" edge="start" color="inherit" aria-label="Home" component={RouterLink}
-                                    to="/reports">
+                        <IconButton
+                            size="large" edge="start" color="inherit"
+                            aria-label="Home" component={RouterLink} to="/reports">
                             <Cloud />
                         </IconButton>
                         <Typography variant="h6" sx={{ flexGrow: 1, margin: 1 }}>
@@ -23,11 +26,11 @@ function Layout({ children }: LayoutProps) {
                         </Typography>
                     </Toolbar>
                 </AppBar>
-                <Container sx={{ padding: 2 }}>
+                <Container sx={{ padding: 2, display: 'flex', justifyContent: 'center' }}>
                     {children}
                 </Container>
             </Box>
-        </React.Fragment>
+        </>
     );
 }
 

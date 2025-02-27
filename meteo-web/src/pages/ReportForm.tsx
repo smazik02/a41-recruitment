@@ -27,6 +27,9 @@ function ReportForm() {
             const fetchReport = async () => {
                 try {
                     const response = await fetch(`http://localhost:8000/api/reports/${params.reportId}`);
+                    if (response.status != 200) {
+                        navigate('/notfound');
+                    }
                     const report: WeatherReport = await response.json();
                     setFormData({
                         temperature: report.temperature,
@@ -41,7 +44,7 @@ function ReportForm() {
 
             fetchReport();
         }
-    }, [params.reportId]);
+    }, [params.reportId, navigate]);
 
     const handleTemperatureChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData({ ...formData, temperature: +e.target.value });
@@ -147,7 +150,7 @@ function ReportForm() {
     return (
         <Layout>
             <form>
-                <Stack direction="column" spacing={1} sx={{ maxWidth: '300px' }}>
+                <Stack direction="column" spacing={1}>
                     <Stack direction="row" spacing={1}>
                         <TextField
                             required
