@@ -4,17 +4,19 @@ import { Alert, Button, MenuItem, Select, SelectChangeEvent, Stack, TextField } 
 import { Check, Delete, Save } from '@mui/icons-material';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { TemperatureUnit, WeatherReport } from '../types.ts';
+import { EmptyFieldError, validateForm } from '../validators.ts';
 
 interface ReportForm {
-    temperature?: number;
+    temperature: number;
     unit: TemperatureUnit;
-    date?: string;
-    city?: string;
+    date: string;
+    city: string;
 }
 
 function ReportForm() {
-    const [formData, setFormData] = useState<ReportForm>({ unit: 'K' });
+    const [formData, setFormData] = useState<ReportForm>({ temperature: 0, unit: 'K', date: '', city: '' });
     const [error, setError] = useState<string | null>(null);
+    const [emptyFields, setEmptyFields] = useState<Set<string>>(new Set([]));
 
     const params = useParams<{ reportId?: string }>();
 
@@ -33,7 +35,7 @@ function ReportForm() {
                         city: report.city
                     });
                 } catch (e) {
-                    setError(`${e}`);
+                    setError(`Something went wrong! ${e}`);
                 }
             };
 
@@ -60,17 +62,29 @@ function ReportForm() {
     const handleAddReport = () => {
         const addReport = async () => {
             setError(null);
-            const response = await fetch('http://localhost:8000/api/reports', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(formData)
-            });
-            if (response.status !== 200) {
-                setError('Something went wrong!');
-            } else {
-                navigate('/reports');
+            setEmptyFields(new Set([]));
+
+            try {
+                validateForm(formData);
+                const response = await fetch('http://localhost:8000/api/reports', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                if (response.status !== 200) {
+                    setError('Something went wrong!');
+                } else {
+                    navigate('/reports');
+                }
+            } catch (err) {
+                if (err instanceof EmptyFieldError) {
+                    setError(err.message);
+                    setEmptyFields(err.fields);
+                } else if (err instanceof Error) {
+                    setError(err.message);
+                }
             }
         };
 
@@ -80,17 +94,29 @@ function ReportForm() {
     const handleSaveReport = () => {
         const saveReport = async () => {
             setError(null);
-            const response = await fetch(`http://localhost:8000/api/reports/${params.reportId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(formData)
-            });
-            if (response.status !== 200) {
-                setError('Something went wrong!');
-            } else {
-                navigate('/reports');
+            setEmptyFields(new Set([]));
+
+            try {
+                validateForm(formData);
+                const response = await fetch(`http://localhost:8000/api/reports/${params.reportId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                if (response.status !== 200) {
+                    setError('Something went wrong!');
+                } else {
+                    navigate('/reports');
+                }
+            } catch (err) {
+                if (err instanceof EmptyFieldError) {
+                    setError(err.message);
+                    setEmptyFields(err.fields);
+                } else if (err instanceof Error) {
+                    setError(err.message);
+                }
             }
         };
 
@@ -123,9 +149,14 @@ function ReportForm() {
             <form>
                 <Stack direction="column" spacing={1} sx={{ maxWidth: '300px' }}>
                     <Stack direction="row" spacing={1}>
-                        <TextField required fullWidth type="number" label="Temperature"
-                                   value={formData.temperature || 273}
-                                   onChange={(e) => handleTemperatureChange(e)} />
+                        <TextField
+                            required
+                            fullWidth
+                            type="number" label="Temperature"
+                            value={formData.temperature}
+                            onChange={(e) => handleTemperatureChange(e)}
+                            error={emptyFields.has('temperature')}
+                            helperText={emptyFields.has('temperature') ? 'Input temperature!' : ''} />
                         <Select value={formData.unit} onChange={(e) => handleUnitChange(e)}>
                             {units.map(unit => (
                                 <MenuItem key={unit.value} value={unit.value}>
@@ -134,10 +165,20 @@ function ReportForm() {
                             ))}
                         </Select>
                     </Stack>
-                    <TextField required label="Date" value={formData.date || ''}
-                               onChange={(e) => handleDateChange(e)} />
-                    <TextField required fullWidth label="City" value={formData.city || ''}
-                               onChange={(e) => handleCityChange(e)} />
+                    <TextField
+                        required
+                        label="Date"
+                        value={formData.date}
+                        onChange={(e) => handleDateChange(e)}
+                        error={emptyFields.has('date')}
+                        helperText={emptyFields.has('date') ? 'Input date!' : ''} />
+                    <TextField
+                        required
+                        label="City"
+                        value={formData.city}
+                        onChange={(e) => handleCityChange(e)}
+                        error={emptyFields.has('city')}
+                        helperText={emptyFields.has('city') ? 'Input city!' : ''} />
                     <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between' }}>
                         {params.reportId
                             ? <>
@@ -147,7 +188,7 @@ function ReportForm() {
                             </>
                             : <Button variant="contained" endIcon={<Check />} onClick={handleAddReport}>Add</Button>}
                     </Stack>
-                    {error !== null && <Alert severity="error">Something went wrong!</Alert>}
+                    {error !== null && <Alert severity="error">{error}</Alert>}
                 </Stack>
             </form>
         </Layout>

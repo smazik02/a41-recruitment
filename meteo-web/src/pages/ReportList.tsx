@@ -1,10 +1,13 @@
 import Layout from '../Layout.tsx';
 import { WeatherReport } from '../types.ts';
 import { DataGrid, GridActionsCellItem, GridColDef, GridToolbarContainer } from '@mui/x-data-grid';
-import { Box, Button } from '@mui/material';
+import { Alert, Button, Stack } from '@mui/material';
 import { Add, Edit } from '@mui/icons-material';
 import { useNavigate } from 'react-router';
 import { useEffect, useState } from 'react';
+import { temperatureToKelvin } from '../validators.ts';
+
+type ReportListState = 'LOADING' | 'VIEW' | 'ERROR';
 
 function EditToolbar() {
     const navigate = useNavigate();
@@ -21,17 +24,22 @@ function EditToolbar() {
 
 function ReportList() {
     const [reports, setReports] = useState<WeatherReport[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
+    const [reportState, setReportState] = useState<ReportListState>('VIEW');
 
     const navigate = useNavigate();
 
     useEffect(() => {
         const fetchReports = async () => {
-            setIsLoading(true);
-            const response = await fetch('http://localhost:8000/api/reports');
-            const reports: WeatherReport[] = await response.json();
-            setReports(reports);
-            setIsLoading(false);
+            setReportState('LOADING');
+            try {
+                const response = await fetch('http://localhost:8000/api/reports');
+                const reports: WeatherReport[] = await response.json();
+                setReports(reports);
+                setReportState('VIEW');
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            } catch (e) {
+                setReportState('ERROR');
+            }
         };
         fetchReports();
     }, []);
@@ -43,17 +51,7 @@ function ReportList() {
             headerName: 'Temperature',
             type: 'number',
             valueGetter: (temp: number, row: WeatherReport) => {
-                switch (row.unit) {
-                    case 'C': {
-                        return `${temp + 273} K`;
-                    }
-                    case 'F': {
-                        return `${Math.round((temp + 459.67) * 5 / 9)} K`;
-                    }
-                    case 'K': {
-                        return `${temp} K`;
-                    }
-                }
+                return `${temperatureToKelvin(temp, row.unit)} K`;
             }
         },
         { field: 'unit' },
@@ -74,9 +72,9 @@ function ReportList() {
 
     return (
         <Layout>
-            <Box>
+            <Stack direction="column" spacing={1}>
                 <DataGrid
-                    loading={isLoading}
+                    loading={reportState === 'LOADING'}
                     rows={reports}
                     columns={columns}
                     columnVisibilityModel={{ id: false, unit: false }}
@@ -88,7 +86,8 @@ function ReportList() {
                         }
                     }}
                 />
-            </Box>
+                {reportState === 'ERROR' && <Alert severity="error">Failed to fetch reports!</Alert>}
+            </Stack>
         </Layout>
     );
 }
