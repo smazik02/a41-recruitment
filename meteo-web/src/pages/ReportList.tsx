@@ -1,7 +1,9 @@
 import Layout from '../Layout.tsx';
 import { WeatherReport } from '../types.ts';
-import { DataGrid, GridColDef, GridRowsProp } from '@mui/x-data-grid';
-import { Box } from '@mui/material';
+import { DataGrid, GridActionsCellItem, GridColDef, GridRowsProp, GridToolbarContainer } from '@mui/x-data-grid';
+import { Box, Button } from '@mui/material';
+import { Add, Edit } from '@mui/icons-material';
+import { useNavigate } from 'react-router';
 
 const reports: GridRowsProp<WeatherReport> = [
     {
@@ -20,40 +22,66 @@ const reports: GridRowsProp<WeatherReport> = [
     }
 ];
 
-const columns: GridColDef[] = [
-    { field: 'id' },
-    {
-        field: 'temperature',
-        headerName: 'Temperature',
-        type: 'number',
-        valueGetter: (temp: number, row: WeatherReport) => {
-            switch (row.unit) {
-                case 'C': {
-                    return `${temp + 273} K`;
-                }
-                case 'F': {
-                    return `${Math.round((temp + 459.67) * 5 / 9)} K`;
-                }
-                case 'K': {
-                    return `${temp} K`;
-                }
-            }
-        }
-    },
-    { field: 'unit' },
-    { field: 'date', headerName: 'Date' },
-    { field: 'city', headerName: 'City' },
-    { field: 'edit', headerName: 'Edit' }
-];
+function EditToolbar() {
+    const navigate = useNavigate();
+
+    return <GridToolbarContainer>
+        <Button
+            color="primary"
+            startIcon={<Add />}
+            onClick={() => navigate('/report/new')}>
+            Add report
+        </Button>
+    </GridToolbarContainer>;
+}
 
 function ReportList() {
+    const navigate = useNavigate();
+
+    const columns: GridColDef[] = [
+        { field: 'id' },
+        {
+            field: 'temperature',
+            headerName: 'Temperature',
+            type: 'number',
+            valueGetter: (temp: number, row: WeatherReport) => {
+                switch (row.unit) {
+                    case 'C': {
+                        return `${temp + 273} K`;
+                    }
+                    case 'F': {
+                        return `${Math.round((temp + 459.67) * 5 / 9)} K`;
+                    }
+                    case 'K': {
+                        return `${temp} K`;
+                    }
+                }
+            }
+        },
+        { field: 'unit' },
+        { field: 'date', headerName: 'Date' },
+        { field: 'city', headerName: 'City' },
+        {
+            field: 'edit', type: 'actions', headerName: 'Edit', getActions: ({ id }) => {
+                return [
+                    <GridActionsCellItem
+                        icon={<Edit />}
+                        label="Edit"
+                        sx={{ color: 'primary.main' }}
+                        onClick={() => navigate(`/report/${id}`)} />
+                ];
+            }
+        }
+    ];
+
     return (
         <Layout>
             <Box>
                 <DataGrid
                     rows={reports}
                     columns={columns}
-                    columnVisibilityModel={{ id: false, unit: false }} />
+                    columnVisibilityModel={{ id: false, unit: false }}
+                    slots={{ toolbar: EditToolbar }} />
             </Box>
         </Layout>
     );
