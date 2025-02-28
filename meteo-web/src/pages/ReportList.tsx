@@ -6,6 +6,7 @@ import { Add, Edit } from '@mui/icons-material';
 import { useNavigate } from 'react-router';
 import { useEffect, useState } from 'react';
 import { temperatureToKelvin } from '../validators.ts';
+import { fetchReports } from '../apiclient.ts';
 
 type ReportListState = 'LOADING' | 'VIEW' | 'ERROR';
 
@@ -29,11 +30,10 @@ function ReportList() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchReports = async () => {
+        const fetchReportsLocal = async () => {
             setReportState('LOADING');
             try {
-                const response = await fetch('http://localhost:8000/api/reports');
-                const reports: WeatherReport[] = await response.json();
+                const reports = await fetchReports();
                 setReports(reports);
                 setReportState('VIEW');
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -41,7 +41,8 @@ function ReportList() {
                 setReportState('ERROR');
             }
         };
-        fetchReports();
+        
+        fetchReportsLocal();
     }, []);
 
     const columns: GridColDef[] = [

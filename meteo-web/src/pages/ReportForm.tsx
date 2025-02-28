@@ -3,12 +3,14 @@ import Layout from '../Layout.tsx';
 import { Alert, Button, MenuItem, Select, SelectChangeEvent, Stack, TextField } from '@mui/material';
 import { ArrowBack, Check, Delete, Save } from '@mui/icons-material';
 import { ChangeEvent, useEffect, useState } from 'react';
-import { TemperatureUnit, WeatherReport } from '../types.ts';
-import { EmptyFieldError, validateForm } from '../validators.ts';
+import { TemperatureUnit } from '../types.ts';
+import { validateForm } from '../validators.ts';
 import { DatePicker, PickerValidDate } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
+import { EmptyFieldError, NotFoundError } from '../errors.ts';
+import { addReport, deleteReport, fetchReport, saveReport } from '../apiclient.ts';
 
-interface ReportForm {
+export interface IReportForm {
     temperature: number;
     unit: TemperatureUnit;
     date: string;
@@ -16,7 +18,7 @@ interface ReportForm {
 }
 
 function ReportForm() {
-    const [formData, setFormData] = useState<ReportForm>({ temperature: 0, unit: 'K', date: '', city: '' });
+    const [formData, setFormData] = useState<IReportForm>({ temperature: 0, unit: 'K', date: '', city: '' });
     const [error, setError] = useState<string | null>(null);
     const [emptyFields, setEmptyFields] = useState<Set<string>>(new Set([]));
 
@@ -25,31 +27,33 @@ function ReportForm() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (params.reportId !== undefined) {
-            const fetchReport = async () => {
-                try {
-                    const response = await fetch(`http://localhost:8000/api/reports/${params.reportId}`);
-                    if (response.status != 200) {
-                        navigate('/notfound');
-                    }
-                    const report: WeatherReport = await response.json();
-                    setFormData({
-                        temperature: report.temperature,
-                        unit: report.unit,
-                        date: report.date,
-                        city: report.city
-                    });
-                } catch (e) {
-                    setError(`Something went wrong! ${e}`);
-                }
-            };
+        const fetchReportLocal = async () => {
+            if (params.reportId === undefined) return;
 
-            fetchReport();
-        }
+            try {
+                const report = await fetchReport(params.reportId);
+                setFormData({
+                    temperature: report.temperature,
+                    unit: report.unit,
+                    date: report.date,
+                    city: report.city
+                });
+            } catch (err) {
+                if (err instanceof NotFoundError) {
+                    navigate('/notfound');
+                } else if (err instanceof Error) {
+                    setError(`Something went wrong! ${err.message}`);
+                }
+            }
+        };
+
+        fetchReportLocal();
     }, [params.reportId, navigate]);
 
     const resetForm = () => {
         setFormData({ temperature: 0, unit: 'K', date: '', city: '' });
+        setError(null);
+        setEmptyFields(new Set([]));
     };
 
     const handleTemperatureChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -80,86 +84,67 @@ function ReportForm() {
     };
 
     const handleAddReport = () => {
-        const addReport = async () => {
+        const addReportLocal = async () => {
             setError(null);
             setEmptyFields(new Set([]));
 
             try {
                 validateForm(formData);
-                const response = await fetch('http://localhost:8000/api/reports', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
-                });
-                if (response.status !== 200) {
-                    setError('Something went wrong!');
-                } else {
-                    navigate('/reports');
-                }
+                await addReport(formData);
+                navigate('/reports');
             } catch (err) {
                 if (err instanceof EmptyFieldError) {
                     setError(err.message);
                     setEmptyFields(err.fields);
                 } else if (err instanceof Error) {
-                    setError(err.message);
+                    setError(`Something went wrong! ${err.message}`);
                 }
             }
         };
 
-        addReport();
+        addReportLocal();
     };
 
     const handleSaveReport = () => {
-        const saveReport = async () => {
+        const saveReportLocal = async () => {
+            if (params.reportId === undefined) return;
+
             setError(null);
             setEmptyFields(new Set([]));
 
             try {
                 validateForm(formData);
-                const response = await fetch(`http://localhost:8000/api/reports/${params.reportId}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
-                });
-                if (response.status !== 200) {
-                    setError('Something went wrong!');
-                } else {
-                    navigate('/reports');
-                }
+                await saveReport(params.reportId, formData);
+                navigate('/reports');
             } catch (err) {
                 if (err instanceof EmptyFieldError) {
                     setError(err.message);
                     setEmptyFields(err.fields);
                 } else if (err instanceof Error) {
-                    setError(err.message);
+                    setError(`Something went wrong! ${err.message}`);
                 }
             }
         };
 
-        saveReport();
+        saveReportLocal();
     };
 
     const handleDeleteReport = () => {
-        const deleteReport = async () => {
-            setError(null);
-            const response = await fetch(`http://localhost:8000/api/reports/${params.reportId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            if (response.status !== 200) {
-                setError('Something went wrong!');
-            } else {
+        const deleteReportLocal = async () => {
+            if (params.reportId === undefined) return;
+
+            try {
+                setError(null);
+                await deleteReport(params.reportId);
                 navigate('/reports');
+            } catch (err) {
+                if (err instanceof Error) {
+                    setError(`Something went wrong! ${err.message}`);
+                }
             }
         };
 
-        deleteReport();
+        deleteReportLocal();
     };
 
     const units = [{ value: 'C', label: '°C' }, { value: 'F', label: '°F' }, { value: 'K', label: 'K' }];

@@ -1,15 +1,8 @@
-import ReportForm from './pages/ReportForm.tsx';
 import { TemperatureUnit } from './types.ts';
+import { IReportForm } from './pages/ReportForm.tsx';
+import { EmptyFieldError } from './errors.ts';
 
-export class EmptyFieldError extends Error {
-    constructor(message: string, readonly fields: Set<string>) {
-        super(message);
-        this.name = 'EmptyFieldError';
-        Object.setPrototypeOf(this, EmptyFieldError.prototype);
-    }
-}
-
-export function validateForm(form: ReportForm) {
+export function validateForm(form: IReportForm) {
     const missingFields = new Set<string>;
     if (form.temperature === undefined) missingFields.add('temperature');
     if (form.date === '') missingFields.add('date');
