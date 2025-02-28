@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from 'react-router';
 import Layout from '../Layout.tsx';
 import { Alert, Button, MenuItem, Select, SelectChangeEvent, Stack, TextField } from '@mui/material';
-import { Check, Delete, Save } from '@mui/icons-material';
+import { ArrowBack, Check, Delete, Save } from '@mui/icons-material';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { TemperatureUnit, WeatherReport } from '../types.ts';
 import { EmptyFieldError, validateForm } from '../validators.ts';
@@ -47,6 +47,10 @@ function ReportForm() {
             fetchReport();
         }
     }, [params.reportId, navigate]);
+
+    const resetForm = () => {
+        setFormData({ temperature: 0, unit: 'K', date: '', city: '' });
+    };
 
     const handleTemperatureChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData({ ...formData, temperature: +e.target.value });
@@ -164,6 +168,14 @@ function ReportForm() {
         <Layout>
             <form>
                 <Stack direction="column" spacing={1}>
+                    <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between' }}>
+                        <Button
+                            variant="text"
+                            startIcon={<ArrowBack />}
+                            onClick={() => navigate('/reports')}
+                        >Go Back</Button>
+                        {params.reportId === undefined && <Button variant="text" onClick={resetForm}>Reset</Button>}
+                    </Stack>
                     <Stack direction="row" spacing={1}>
                         <TextField
                             required
