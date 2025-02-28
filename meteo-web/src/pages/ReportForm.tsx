@@ -5,6 +5,8 @@ import { Check, Delete, Save } from '@mui/icons-material';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { TemperatureUnit, WeatherReport } from '../types.ts';
 import { EmptyFieldError, validateForm } from '../validators.ts';
+import { DatePicker, PickerValidDate } from '@mui/x-date-pickers';
+import dayjs from 'dayjs';
 
 interface ReportForm {
     temperature: number;
@@ -54,8 +56,19 @@ function ReportForm() {
         setFormData({ ...formData, unit: e.target.value as TemperatureUnit });
     };
 
-    const handleDateChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        setFormData({ ...formData, date: e.target.value });
+    const handleDateChange = (date: PickerValidDate | null) => {
+        const formatDate = (date: Date) => {
+            return [
+                `${date.getFullYear()}`,
+                `${date.getMonth() + 1}`.padStart(2, '0'),
+                `${date.getDate()}`.padStart(2, '0')
+            ].join('-');
+        };
+
+        const dateToJs = date?.toDate();
+        if (dateToJs === undefined) return;
+
+        setFormData({ ...formData, date: formatDate(dateToJs) });
     };
 
     const handleCityChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -168,13 +181,19 @@ function ReportForm() {
                             ))}
                         </Select>
                     </Stack>
-                    <TextField
-                        required
+                    <DatePicker
                         label="Date"
-                        value={formData.date}
-                        onChange={(e) => handleDateChange(e)}
-                        error={emptyFields.has('date')}
-                        helperText={emptyFields.has('date') ? 'Input date!' : ''} />
+                        value={dayjs(formData.date)}
+                        format="YYYY-MM-DD"
+                        onChange={(val) => {
+                            handleDateChange(val);
+                        }}
+                        slotProps={{
+                            textField: {
+                                helperText: emptyFields.has('date') ? 'Input date!' : ''
+                            }
+                        }}
+                    />
                     <TextField
                         required
                         label="City"

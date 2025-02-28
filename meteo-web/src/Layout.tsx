@@ -2,6 +2,8 @@ import { AppBar, Box, Container, CssBaseline, IconButton, Toolbar, Typography } 
 import { Link as RouterLink } from 'react-router';
 import { Cloud } from '@mui/icons-material';
 import * as React from 'react';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -9,9 +11,8 @@ interface LayoutProps {
 
 
 function Layout({ children }: LayoutProps) {
-
     return (
-        <>
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
             <CssBaseline />
             <Box>
                 <AppBar position="static">
@@ -30,7 +31,7 @@ function Layout({ children }: LayoutProps) {
                     {children}
                 </Container>
             </Box>
-        </>
+        </LocalizationProvider>
     );
 }
 
