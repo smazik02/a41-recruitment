@@ -1,3 +1,5 @@
+import * as React from 'react';
+
 export interface WeatherReport {
     id: string;
     temperature: number;
@@ -7,3 +9,7 @@ export interface WeatherReport {
 }
 
 export type TemperatureUnit = 'C' | 'K' | 'F';
+
+export interface LayoutProps {
+    children: React.ReactNode;
+}

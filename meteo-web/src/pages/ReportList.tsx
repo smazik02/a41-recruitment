@@ -1,4 +1,4 @@
-import Layout from '../Layout.tsx';
+import Layout from '../components/Layout.tsx';
 import { WeatherReport } from '../types.ts';
 import { DataGrid, GridActionsCellItem, GridColDef, GridToolbarContainer } from '@mui/x-data-grid';
 import { Alert, Button, Stack } from '@mui/material';
@@ -41,7 +41,7 @@ function ReportList() {
                 setReportState('ERROR');
             }
         };
-        
+
         fetchReportsLocal();
     }, []);
 

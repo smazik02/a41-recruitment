@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router';
-import Layout from '../Layout.tsx';
+import Layout from '../components/Layout.tsx';
 import { Alert, Button, MenuItem, Select, SelectChangeEvent, Stack, TextField } from '@mui/material';
 import { ArrowBack, Check, Delete, Save } from '@mui/icons-material';
 import { ChangeEvent, useEffect, useState } from 'react';
